@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://suyan-beauty-journal.liammaison.chatgpt.site/sitemap.xml
