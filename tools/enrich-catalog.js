@@ -18,6 +18,7 @@ const categoryFor = (slug) => Object.entries(groups).find(([, slugs]) => slugs.i
 const imageFiles = fs.readdirSync(path.join(root, 'media/catalog')).filter((f) => f.endsWith('.png') && !f.startsWith('套装_'));
 const imageNames = imageFiles.map((f) => ({ file: f, key: f.replace(/\.png$/,'').replace(/^[^_]+_[^_]+_[^_]+_/,'').toLowerCase().replace(/[_-]+/g,' ') }));
 const tokens = (s) => clean(s).toLowerCase().replace(/oem\/odm/g,' ').replace(/[^a-z0-9]+/g,' ').split(/\s+/).filter((w) => w.length > 2 && !['private','label','product','project','care','look','for','with','and','the','from','your','light','strong','gentle','comfort','daily','style','smooth','glow'].includes(w));
+const normalizeImageKey = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
 function imageFor(title, category) {
   const ts = tokens(title);
   const pool = imageNames.filter((x) => category==='skincare' ? x.file.startsWith('护肤') : category==='haircare' ? x.file.startsWith('护发') : category==='styling' ? x.file.startsWith('造型') : true);
@@ -31,6 +32,7 @@ function imageFor(title, category) {
   }
   const titleNorm=title.toLowerCase();
   const fixed=[
+    [/balancing cleansing gel/i,'SK-26036_RESET CLEANSER'],[/blow.dry smoothing milk/i,'ST-26011_TEXTURE CREAM'],[/cica comfort gel cream/i,'SK-26055_CALM SERUM'],[/curl definition gel/i,'ST-26016_LOCK GEL'],[/curl nourish conditioner/i,'HY-26029_SOFT CONDITIONER'],[/curl shaping cream/i,'ST-26015_FINISH GEL'],[/dry shampoo spray/i,'ST-26008_DAY DRY SHAMPOO'],[/ectoin moisture lotion/i,'SK-26002_DAILY LOTION'],[/fibre strength serum/i,'HY-26002_FIBER ESSENCE'],[/flyaway styling stick/i,'ST-26006_BALM'],[/fresh volume shampoo/i,'HY-26009_BALANCE SHAMPOO'],[/frizz smooth serum/i,'HY-26005_SHIELD SERUM'],[/hair growth/i,'HY-26007_ROOT TONIC'],[/hair loss scalp care/i,'HY-26006_RENEW SCALP SERUM'],[/hair loss shampoo/i,'HY-26021_STRENGTH SHAMPOO'],[/heat styling prep serum/i,'HY-26005_SHIELD SERUM'],[/hydrating essence/i,'SK-26004_HYDRA ESSENCE'],[/light balance serum/i,'SK-26014_BALANCE CREAM'],[/matte volume powder/i,'ST-26012_LIFT POWDER'],[/natural shine wax/i,'ST-26005_SHINE POMADE'],[/non.aerosol dry shampoo powder/i,'ST-26008_DAY DRY SHAMPOO'],[/pha refining essence/i,'SK-26008_TONER'],[/protein care hair mask/i,'HY-26028_REPAIR MASK'],[/retinol night serum/i,'SK-26046_RENEW SERUM'],[/root lift foam/i,'ST-26014_CURL MOUSSE'],[/salicylic clarifying serum/i,'SK-26053_SPOT SERUM'],[/scalp fresh shampoo/i,'HY-26021_STRENGTH SHAMPOO'],[/scalp moisture essence/i,'HY-26022_SUPPORT TONIC'],[/scalp refining essence/i,'HY-26022_SUPPORT TONIC'],[/sea salt texture spray/i,'ST-26009_FINISH SPRAY'],[/smooth ends serum/i,'HY-26005_SHIELD SERUM'],[/styling mousse/i,'ST-26014_CURL MOUSSE'],[/strong hold styling gel/i,'ST-26016_LOCK GEL'],[/strong texture clay/i,'ST-26002_MATTE CLAY'],[/curl shaping foam/i,'ST-26014_CURL MOUSSE'],
     [/vitamin.c radiance serum/i,'SK-26047_BRIGHT AMPOULE'],[/niacinamide glow lotion/i,'SK-26002_DAILY LOTION'],[/radiance moisture sheet mask/i,'SK-26048_BRIGHT MASK'],[/even glow body lotion/i,'SK-26002_DAILY LOTION'],
     [/alpha.arbutin tone serum/i,'SK-26012_ARBUTIN ESSENCE'],[/tranexamic tone serum/i,'SK-26041_TONE SERUM'],[/even tone cream/i,'SK-26029_FADE CREAM'],[/post.blemish tone serum/i,'SK-26053_SPOT SERUM'],
     [/multi.ha hydration serum/i,'SK-26004_HYDRA ESSENCE'],[/weightless water gel/i,'SK-26010_WATER GEL'],[/overnight moisture mask/i,'SK-26039_SLEEP MASK'],[/hydration sheet mask/i,'SK-26033_RADIANCE MASK'],
@@ -40,7 +42,7 @@ function imageFor(title, category) {
     [/root lift foam/i,'HY-26024_VOLUME MOUSSE'],[/curl shaping foam/i,'ST-26014_CURL MOUSSE'],[/wet look styling gel/i,'ST-26015_FINISH GEL']
   ];
   const preferred=fixed.find(([re])=>re.test(titleNorm));
-  if(preferred){const found=imageNames.find(x=>x.key.includes(preferred[1].toLowerCase()));if(found)best=found;}
+  if(preferred){const needle=normalizeImageKey(preferred[1]);const found=imageNames.find(x=>normalizeImageKey(x.key).includes(needle));if(found)best=found;}
   return best ? `../media/catalog/${encodeURIComponent(best.file)}` : '../media/editorial-0.png';
 }
 
@@ -80,7 +82,6 @@ write('catalog.html', catalogWithSets);
 for (const file of files('products')) {
   const slug = file.replace('.html','');
   let html = read(`products/${file}`);
-  if (html.includes('product-discovery-content')) continue;
   const title = titleOf(html).replace(/\s+OEM\/ODM.*$/,'');
   const category = categoryFor((html.match(/class="crumb"[\s\S]*?href="\.\.\/series\/([^"/]+)\.html"/)||[])[1]);
   const image = imageFor(title, category);
@@ -88,6 +89,14 @@ for (const file of files('products')) {
   const words = tokens(title);
   const format = /shampoo|cleanser|wash/i.test(title) ? 'rinse-off wash' : /mask/i.test(title) ? 'mask' : /spray|mist/i.test(title) ? 'spray' : /oil/i.test(title) ? 'oil' : /gel/i.test(title) ? 'gel' : /foam|mousse/i.test(title) ? 'foam' : /cream|lotion|milk|balm/i.test(title) ? 'cream or emulsion' : 'serum or essence';
   const focus = words.slice(0,3).join(' ') || title.toLowerCase();
+  if (html.includes('product-discovery-content')) {
+    const image=imageFor(title,category);
+    const webp=image.replace(/\.png$/i,'.webp');
+    html=html.replace(/srcset="\.\.\/media\/(?:catalog|editorial)[^"]*"/g,`srcset="${webp}"`)
+      .replace(/src="\.\.\/media\/(?:catalog|editorial)[^"]*"/g,`src="${image}"`);
+    write(`products/${file}`,html);
+    continue;
+  }
   const insert = `<section class="product-discovery-content" aria-labelledby="discovery-heading"><div class="product-concept-visual"><img src="${image}" alt="${title} product concept visual for a private-label ${label.toLowerCase()} range" loading="lazy"><p>Product concept visual. Formula, pack and artwork are confirmed for each project.</p></div><div class="product-discovery-copy"><p class="eyebrow">FORMULATION &amp; SEARCH GUIDE</p><h2 id="discovery-heading">${title}: product direction and buyer guide</h2><p>${title} is a product format direction for brands planning a ${label.toLowerCase()} range. Start with the intended routine step, target customer, sales channel and destination market; then align the texture and pack with the product's role. This page describes a development brief, not a finished formula or a guaranteed performance claim.</p><h3>What to define in the product brief</h3><p>For a ${format}, agree on application feel, rinse-off or leave-on use, fragrance preference, pack compatibility and target price before sampling. The ingredient list and permitted claims must be checked against the final formula and the regulations in every sales market.</p><ul><li><strong>Customer and use:</strong> describe who the product is for and where it fits in the routine.</li><li><strong>Formula direction:</strong> discuss ingredient options and sensory targets; verify compatibility, stability and substantiation with the manufacturing partner.</li><li><strong>Packaging:</strong> confirm material, dispensing format, label space and market-specific language.</li><li><strong>Search intent:</strong> buyers often compare ${focus}, format, routine order and private-label manufacturing options. Use accurate INCI and product information once the project specification is approved.</li></ul><h3>Ingredient and claim considerations</h3><p>Ingredient popularity is a discovery signal, not proof that a finished product delivers a particular result. Review the exact ingredient identity, concentration, stability and evidence in the finished formula. Keep cosmetic language truthful, specific and appropriate to the destination market; avoid disease-treatment or unsubstantiated before-and-after promises.</p><h3>Frequently asked questions</h3><details><summary>Can this product be customized for my brand?</summary><p>Yes. The project brief can cover formula direction, texture, fragrance, pack and artwork. The feasible options and order requirements are confirmed after technical review.</p></details><details><summary>Are the pictured formula and package final?</summary><p>No. The image is an illustrative product concept. Final formula, claims, packaging and artwork are confirmed for each project.</p></details><details><summary>What information helps prepare a quotation?</summary><p>Share your destination market, target customer, sales channel, requested format, packaging preference and estimated order quantity.</p></details><p class="product-source-note">Claims and market requirements are reviewed against the approved formula and destination-market rules. See <a href="../journal/${(html.match(/journal\/([^"/]+)\.html/)||[])[1]||'index'}.html">related product guidance</a> and <a href="../contact.html">request a project review</a>.</p></div></section>`;
   const displayImage=image;
   const displayWebp=displayImage.replace(/\.png$/i,'.webp');
@@ -166,4 +175,6 @@ journalIndex=journalIndex.replace(/<a class="card" href="journal\/([^"/]+)\.html
 });
 write('journal.html',journalIndex);
 
+function bumpStyles(dir=root){for(const name of fs.readdirSync(dir,{withFileTypes:true})){const full=path.join(dir,name.name);if(name.isDirectory())bumpStyles(full);else if(name.isFile()&&name.name.endsWith('.html')){const current=fs.readFileSync(full,'utf8');const updated=current.replace(/style\.css\?v=[^"']+/g,'style.css?v=20260922-1');if(updated!==current)fs.writeFileSync(full,updated);}}}
+bumpStyles();
 console.log(`Enhanced ${Object.values(groups).flat().length} child categories, ${files('products').length} product pages, and ${files('journal').filter(f=>f!=='index.html').length} editorial guides.`);

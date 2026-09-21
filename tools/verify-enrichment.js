@@ -5,6 +5,7 @@ const fail=[];
 const list=(dir)=>fs.readdirSync(path.join(docs,dir)).filter((f)=>f.endsWith('.html'));
 const groups={skincare:['brightening','even-tone','fine-lines','blemish-care','barrier-care','hydration'],haircare:['shampoo','hair-mask','conditioner','hair-oil','hair-serum','scalp-serum','breakage-care','hair-growth-projects'],styling:['clay-paste','wax-pomade','styling-gel','styling-spray','styling-foam','curl-cream','powder-dry-shampoo']};
 const catalog=fs.readFileSync(path.join(docs,'catalog.html'),'utf8');
+const productCardSlugs=new Set(),categoryImageErrors=[];
 let catalogTotal=0;
 for(const parent of Object.keys(groups)){
   const start=catalog.indexOf(`<section class="catalog-category" id="${parent}">`);
@@ -13,6 +14,12 @@ for(const parent of Object.keys(groups)){
   const end=next>=0?next:set;
   const block=catalog.slice(start,end<0?catalog.length:end);
   const count=(block.match(/class="category-product-card"/g)||[]).length;
+  for(const card of block.matchAll(/<a class="category-product-card" href="products\/([^"#]+)"><span class="category-product-image"><img src="([^\"]+)/g)){
+    const [,slug,src]=card;productCardSlugs.add(slug);
+    const image=decodeURIComponent(path.basename(src));
+    const expected=parent==='skincare'?'护肤':parent==='haircare'?'护发':'造型';
+    if(!image.startsWith(expected+'_'))categoryImageErrors.push(`${parent}:${slug}:${image}`);
+  }
   console.log(`${parent}: ${count} product cards`);
   catalogTotal+=count;
   if(!count)fail.push(`empty catalog category ${parent}`);
@@ -34,6 +41,6 @@ for(const f of list('journal')){
   const src=(s.match(/journal-concept-hero"><picture[^>]*><source[^>]*srcset="([^"]+)/)||[])[1];
   if(!src||!fs.existsSync(path.resolve(docs,'journal',decodeURIComponent(src))))brokenBlogImgs++;
 }
-const result={catalogTotal,productPages:list('products').length,brokenProductImgs,missingProductCopy,badSchemas,cjk,blogArticles:list('journal').filter(f=>f!=='index.html').length,brokenBlogImgs,missingBlogContent,setCards:(catalog.match(/class="set-concept-card"/g)||[]).length};
+const result={catalogTotal,uniqueCatalogProducts:productCardSlugs.size,productPages:list('products').length,categoryImageErrors,fullFrameStyles:fs.readFileSync(path.join(docs,'style.css'),'utf8').includes('object-fit:contain!important'),brokenProductImgs,missingProductCopy,badSchemas,cjk,blogArticles:list('journal').filter(f=>f!=='index.html').length,brokenBlogImgs,missingBlogContent,setCards:(catalog.match(/class="set-concept-card"/g)||[]).length};
 console.log(result);
-if(catalogTotal!==75||result.setCards!==23||brokenProductImgs||missingProductCopy||badSchemas||cjk.length||brokenBlogImgs||missingBlogContent){console.error('Enrichment validation failed');process.exit(1)}
+if(catalogTotal!==75||productCardSlugs.size!==75||categoryImageErrors.length||!result.fullFrameStyles||result.setCards!==23||brokenProductImgs||missingProductCopy||badSchemas||cjk.length||brokenBlogImgs||missingBlogContent){console.error('Enrichment validation failed');process.exit(1)}
