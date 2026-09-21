@@ -111,7 +111,7 @@ const words = s => s.replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').split(/\s+/).
 const slugLabel = s => s.split('-').map(x => x[0].toUpperCase()+x.slice(1)).join(' ');
 const existing = ['brightening','even-tone','fine-lines','blemish-care','barrier-care','hydration','shampoo','hair-mask','conditioner','hair-oil','hair-serum','scalp-serum','breakage-care','hair-growth-projects','clay-paste','wax-pomade','styling-gel','styling-spray','styling-foam','curl-cream','powder-dry-shampoo'].map(slug=>{
   const html=fs.readFileSync(path.join(journal,slug+'.html'),'utf8');
-  return {slug,title:(html.match(/<title>([\s\S]*?)<\/title>/i)||[])[1].replace(/\s*\|\s*AURVONX.*/i,'').replace(/\s*Guide$/i,''),category:/hair|shampoo|conditioner|scalp|breakage/i.test(slug)?(/styling|curl|clay|wax|foam|spray|pomade|powder/i.test(slug)?'Styling':'Haircare'):'Skincare'};
+  return {slug,title:(html.match(/<title>([\s\S]*?)<\/title>/i)||[])[1].replace(/\s*\|\s*AURVONX.*/i,'').replace(/\s*Guide$/i,''),category:/styling|curl|clay|wax|foam|spray|pomade|powder/i.test(slug)?'Styling':/hair|shampoo|conditioner|scalp|breakage/i.test(slug)?'Haircare':'Skincare'};
 });
 
 if(entries.length!==92) throw new Error(`Expected 92 new topics; got ${entries.length}`);

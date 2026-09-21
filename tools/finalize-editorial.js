@@ -17,7 +17,7 @@ let moved=0;
 for(let i=0;i<existing.length;i++){
  const slug=existing[i],file=path.join(journal,slug+'.html');let html=fs.readFileSync(file,'utf8');
  const title=(html.match(/<title>([\s\S]*?)<\/title>/i)||[])[1].replace(/\s*\|\s*AURVONX.*/i,'');
- const category=/hair-growth|scalp|hair-|shampoo|conditioner|breakage/i.test(slug)?(/curl|clay|wax|foam|spray|pomade|powder/i.test(slug)?'Styling':'Haircare'):'Skincare';
+ const category=/styling|curl|clay|wax|foam|spray|pomade|powder/i.test(slug)?'Styling':/hair-growth|scalp|hair-|shampoo|conditioner|breakage/i.test(slug)?'Haircare':'Skincare';
  const svgPath=`../media/journal/${slug}.svg`;
  fs.writeFileSync(path.join(root,'media','journal',`${slug}.svg`),svg(slug,title,category,i));
  const old=takeSection(html,'Plan your private-label range');
