@@ -1,3 +1,4 @@
 *.zip
 outputs/
 .sites-runtime/
+archive/legacy-site-visuals/

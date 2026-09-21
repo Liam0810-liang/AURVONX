@@ -50,3 +50,4 @@ body{background:#f7f7f3;color:#173b32}header{background:#f7f7f3f2} .platform-car
 .page-visual.journal-concept-hero img{display:block;width:100%;height:auto;max-height:none;aspect-ratio:1.6;object-fit:cover}
 .editorial-article .article-feature-image img{height:auto;aspect-ratio:1.6;object-fit:cover}
 @media(max-width:760px){.product-discovery-content{grid-template-columns:1fr;width:auto}.product-concept-visual{max-width:100%}.product-concept-visual img{aspect-ratio:1.15}.page-visual.journal-concept-hero img{aspect-ratio:1.45}}
+.journal-index-image img{object-fit:cover}.case-study-card{grid-template-columns:minmax(260px,.85fr) minmax(0,1.5fr);align-items:center}.case-study-card>img{display:block;width:100%;height:100%;min-height:260px;max-height:390px;object-fit:cover}.case-study-card h2{margin-top:.35rem}.case-study-card p{line-height:1.75}.case-disclaimer{padding:1rem 1.25rem;background:#eaf0e9;border-left:3px solid #698675;color:#42554a}

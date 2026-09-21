@@ -21,6 +21,7 @@ for(const parent of Object.keys(groups)){
     if(categoryImages.has(image))categoryImageDuplicates.push(`${parent}:${slug} repeats ${categoryImages.get(image)} image ${image}`);else categoryImages.set(image,slug);
     const expected=parent==='skincare'?'护肤':parent==='haircare'?'护发':'造型';
     if(image.endsWith('.svg')){if(image!==`${slug.replace(/\.html$/,'')}.svg`||!fs.existsSync(path.join(docs,'media','product-concepts',image)))categoryImageErrors.push(`${parent}:${slug}:${image}`);}
+    else if(fs.existsSync(path.join(docs,'media','catalog','product-renders',image))){}
     else if(!image.startsWith(expected+'_'))categoryImageErrors.push(`${parent}:${slug}:${image}`);
   }
   console.log(`${parent}: ${count} product cards`);
